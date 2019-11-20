@@ -7,28 +7,21 @@ symmetool.axis_list = { "X-Axis","Y-Axis","Z-Axis","XY-Axes","YZ-Axes","XZ-Axes"
 
 local l = 32
 local boxen = {}
-boxen.x = { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)} }
-boxen.y = { {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)} }
-boxen.z = { {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
-boxen.xy = { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
-            {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)} }
-boxen.yz = { {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)},
-            {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
-boxen.xz = { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
-            {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
-boxen.xyz = { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
-              {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)},
-              {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
+    boxen.x =   { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)} }
+    boxen.y =   { {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)} }
+    boxen.z =   { {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
+    boxen.xy =  { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
+                  {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)} }
+    boxen.yz =  { {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)},
+                  {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
+    boxen.xz =  { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
+                  {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
+    boxen.xyz = { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
+                  {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)},
+                  {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
 
-
-
-
--- boxen.a = { {-(l+.55), -.05, -.05, (l+.55), .05, .05}, 
---             {-.05, -(l+.55), -.05, .05, (l+.55), .05},
---             {-.05, -.05, -(l+.55), .05, .05, (l+.55)} }
 local axis = 1
 local order = 2
-
 
 local function remove_entity(pos)
     local aobj = minetest.get_objects_inside_radius(pos,1)
@@ -43,16 +36,16 @@ local function remove_entity(pos)
     end
 end
 
-local function remove_node(pos)
-    if pos then
-        minetest.set_node(pos,{name="air"})
-    end
-end
-
 local function show_entity(pos,axis)
     local aname = string.lower(string.split(symmetool.axis_list[axis],"-")[1])
     remove_entity(pos)
     minetest.add_entity(pos, "symmetool:"..aname.."axis")
+end
+
+local function remove_node(pos)
+    if pos then
+        minetest.set_node(pos,{name="air"})
+    end
 end
 
 local function cycle_axis(pos)
@@ -98,32 +91,32 @@ local function pickup(puncher,pos)
     end
 end
 
+local function flip(pos,center,axis)
+    local new_pos = {x = pos.x, y = pos.y, z = pos.z }
+    local r = pos[axis] - center[axis]
+    new_pos[axis] = pos[axis] - 2*r
+    return new_pos
+end
+
 local function super_build(player,pos,pload)
     local pmeta = player:get_meta()
     if pmeta:get_string("pos") ~= "" then
         local center = minetest.deserialize(pmeta:get_string("pos"))
         local meta = minetest.get_meta(center)
         local axis = meta:get_int("axis")
-        local reflect = string.lower(string.split(symmetool.axis_list[axis],"-")[1])
-        minetest.set_node(pos,{name=pload})
-        local rpos = {}
-        for i = 1,#reflect do
-            local this_axis = string.sub(reflect,i,i)
-            for _,c in pairs( {"x","y","z"} ) do
-                if string.find(this_axis,c) then
-                    local r = pos[c] - center[c]
-                    rpos[c] = pos[c] - 2*r
-                else
-                    rpos[c] = pos[c]
-                end
-                if pos ~= rpos then
-                    minetest.set_node(rpos,{name=pload})
-                end
+        local reflect_axes = string.lower(string.split(symmetool.axis_list[axis],"-")[1])
+        local coords = { pos }
+        for i = 1,#reflect_axes do
+            local this_axis = string.sub(reflect_axes,i,i)
+            for _,coord in pairs(coords)
+                coords[#coords+1] = flip(coord,center,this_axis)
             end
+        end
+        for _,coord in pairs(coords)
+            minetest.set_node(coord,{name=pload})
         end
     end
 end
-
 
 local function load_or_build(player,pointed_thing)
     local pmeta = player:get_meta()
