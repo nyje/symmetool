@@ -5,7 +5,7 @@ symmetool = {}
 symmetool.axis_list = { "X-Axis","Y-Axis","Z-Axis","XY-Axes","YZ-Axes","XZ-Axes","XYZ-Axes" }
 
 
-local l = 32
+local l = 2
 local boxen = {}
     boxen.x =   { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)} }
     boxen.y =   { {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)} }
@@ -108,9 +108,12 @@ local function super_build(player,pos,pload)
         local coords = { pos }
         for i = 1,#reflect_axes do
             local this_axis = string.sub(reflect_axes,i,i)
+			local new_coords = {}
             for _,coord in pairs(coords) do
-                coords[#coords+1] = flip(coord,center,this_axis)
+				new_coords[#new_coords+1] = coord
+				new_coords[#new_coords+1] = flip(coord,center,this_axis)
             end
+			coords = new_coords
         end
         for _,coord in pairs(coords) do
             minetest.set_node(coord,{name=pload})
@@ -125,9 +128,9 @@ local function load_or_build(player,pointed_thing)
         if nodename == "symmetool:rotation" then
             if player:get_player_control().sneak then
                 pickup(player,pointed_thing.under)
-            else
-                cycle_order(pointed_thing.under)
-                inform_state(player,pointed_thing.under)
+            --else
+            --    cycle_order(pointed_thing.under)
+            --    inform_state(player,pointed_thing.under)
             end
         else
             local pload = pmeta:get_string("load")
@@ -173,9 +176,9 @@ minetest.register_node("symmetool:rotation", {
     on_punch = function(pos, node, puncher, pointed_thing)
         if puncher:get_player_control().sneak then
             pickup(puncher,pos)
-        else
-            cycle_order(pos)
-            inform_state(puncher,pos)
+        --else
+        --    cycle_order(pos)
+        --    inform_state(puncher,pos)
         end
         return true
     end,
