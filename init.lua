@@ -21,7 +21,13 @@ local boxen = {}
                   {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
 
 local axis = 1
-local order = 2
+
+local function flip(pos,center,axis)
+    local new_pos = {x = pos.x, y = pos.y, z = pos.z }
+    local r = pos[axis] - center[axis]
+    new_pos[axis] = pos[axis] - 2*r
+    return new_pos
+end
 
 local function remove_entity(pos)
     local aobj = minetest.get_objects_inside_radius(pos,1)
@@ -42,68 +48,42 @@ local function show_entity(pos,axis)
     minetest.add_entity(pos, "symmetool:"..aname.."axis")
 end
 
-local function remove_node(pos)
+local function replace_node(pos,player,node_name)
     if pos then
-        minetest.set_node(pos,{name="air"})
+		if not minetest.is_protected(pos,player:get_player_name()) then
+			minetest.set_node(pos,{name=node_name})
+		end
     end
 end
 
-local function cycle_axis(pos)
-    local meta = minetest.get_meta(pos)
-    axis = meta:get_int("axis") + 1
-    if axis == 8 then axis = 1 end
-    meta:set_int("axis",axis)
-    show_entity(pos,axis)
-end
-
-local function cycle_order(pos)
-    local meta = minetest.get_meta(pos)
-    order = meta:get_int("order") + 1
-    if order == 7 then order = 2 end
-    meta:set_int("order",order)
-end
-
-local function inform_state(placer,pos)
-    local meta = minetest.get_meta(pos)
-    local a = meta:get_int("axis")
-    local o = meta:get_int("order")
-    local pmeta = placer:get_meta()
-    local pload = pmeta:get_string("load")
-    if pload == "" then
-        pload = "Punch a node with the tool to start building"
-    else
-        pload = "Building with "..pload
-    end
-    minetest.chat_send_player(placer:get_player_name(), symmetool.axis_list[a].."("..o..") "..pload)
-end
-
-local function pickup(puncher,pos)
-    remove_node(pos)
-    remove_entity(pos)
-    local inv = puncher:get_inventory()
-    if not (creative and creative.is_enabled_for
-            and creative.is_enabled_for(puncher:get_player_name()))
-            or not inv:contains_item("main", "symmetool:rotation") then
-        local leftover = inv:add_item("main", "stmmetool:rotation")
-        if not leftover:is_empty() then
-            minetest.add_item(self.object:get_pos(), leftover)
-        end
-    end
-end
-
-local function flip(pos,center,axis)
-    local new_pos = {x = pos.x, y = pos.y, z = pos.z }
-    local r = pos[axis] - center[axis]
-    new_pos[axis] = pos[axis] - 2*r
-    return new_pos
-end
-
-local function super_build(player,pos,pload)
+local function cycle_axis(player)
     local pmeta = player:get_meta()
-    if pmeta:get_string("pos") ~= "" then
-        local center = minetest.deserialize(pmeta:get_string("pos"))
-        local meta = minetest.get_meta(center)
-        local axis = meta:get_int("axis")
+	if pmeta:get_string("center") ~= "" then
+		local center = minetest.deserialize(pmeta:get_string("center"))
+		local axis = pmeta:get_int("axis") + 1
+		if axis == 8 then axis = 1 end
+		pmeta:set_int("axis",axis)
+		show_entity(center,axis)
+	end
+end
+
+local function inform_state(player)
+    local pmeta = player:get_meta()
+    local a = pmeta:get_int("axis")
+    local payload = pmeta:get_string("payload")
+	if payload == "" then
+		payload = " Punch a node with the tool to start building"
+	else
+		payload = " Building with "..payload
+	end
+	minetest.chat_send_player(player:get_player_name(), symmetool.axis_list[a]..payload)
+end
+
+local function super_build(pos,player,node_name)
+    local pmeta = player:get_meta()
+    if pmeta:get_string("center") ~= "" then
+        local center = minetest.deserialize(pmeta:get_string("center"))
+        local axis = pmeta:get_int("axis")
         local reflect_axes = string.lower(string.split(symmetool.axis_list[axis],"-")[1])
         local coords = { pos }
         for i = 1,#reflect_axes do
@@ -116,39 +96,38 @@ local function super_build(player,pos,pload)
 			coords = new_coords
         end
         for _,coord in pairs(coords) do
-            minetest.set_node(coord,{name=pload})
+			if node_name == "air" then
+				local old_node_name = minetest.get_node(coord).name
+				local inv = player:get_inventory()
+				if not (creative and creative.is_enabled_for
+						and creative.is_enabled_for(player:get_player_name()))
+						or not inv:contains_item("main", old_node_name) then
+					local leftover = inv:add_item("main", old_node_name)
+					if not leftover:is_empty() then
+						minetest.add_item(pos, leftover)
+					end
+				end
+			end
+			replace_node(coord,player,node_name)
         end
-    end
+    else
+		replace_node(pos,player,node_name)
+	end
 end
 
-local function load_or_build(player,pointed_thing)
-    local pmeta = player:get_meta()
-    if pointed_thing.type == "node" then
-        local nodename = minetest.get_node(pointed_thing.under).name
-        if nodename == "symmetool:rotation" then
-            if player:get_player_control().sneak then
-                pickup(player,pointed_thing.under)
-            --else
-            --    cycle_order(pointed_thing.under)
-            --    inform_state(player,pointed_thing.under)
-            end
-        else
-            local pload = pmeta:get_string("load")
-            if pload == "" then
-                pmeta:set_string("load",nodename)
-                minetest.chat_send_player(player:get_player_name(),"Now building with "..nodename)
-            else
-                super_build(player,pointed_thing.above,pload)
-            end
-        end
-    end
-    if pointed_thing.type == "nothing" then
-        pmeta:set_string("load",nil)
-        minetest.chat_send_player(player:get_player_name(),"Punch a block to choose material")
-    end
+local function pickup(pos,player)
+	local node_name = minetest.get_node(pos).name
+	if node_name == "symmetool:mirror" then
+		local pmeta = player:get_meta()
+		pmeta:set_string("payload",nil)
+		pmeta:set_string("center",nil)
+		remove_entity(pos)
+	end
+    super_build(pos,player,"air")
 end
 
-minetest.register_node("symmetool:rotation", {
+
+minetest.register_node("symmetool:mirror", {
     description = "Circular Symmetry Tool",
     drawtype = "mesh",
     mesh = "mymeshnodes_sphere.obj",
@@ -161,43 +140,75 @@ minetest.register_node("symmetool:rotation", {
     groups = {cracky = 3, snappy = 3, crumbly = 3},
     on_blast = function() end,
     after_place_node = function(pos, placer, itemstack, pointed_thing)
+		local node_name = minetest.get_node(pointed_thing.under).name
+		if node_name == "symmetool:mirror" then
+			cycle_axis(placer)
+			inform_state(placer)
+			replace_node(pos,placer,"air")
+			return
+		end
         local pmeta = placer:get_meta()
-        if pmeta:get_string("pos") ~= "" then
-            local opos=minetest.deserialize(pmeta:get_string("pos"))
-            pickup(placer,opos)
-        end
-        local meta = minetest.get_meta(pos)
-        meta:set_int("axis",1)
-        meta:set_int("order",2)
-        inform_state(placer,pos)
-        show_entity(pos,1)
-        pmeta:set_string("pos",minetest.serialize(pos))
-    end,
-    on_punch = function(pos, node, puncher, pointed_thing)
-        if puncher:get_player_control().sneak then
-            pickup(puncher,pos)
-        --else
-        --    cycle_order(pos)
-        --    inform_state(puncher,pos)
-        end
-        return true
-    end,
-    on_dig = function() end,
-    on_rightclick = function(pos, node, clicker, itemstack, pointed_thing)
-        if node.name == "symmetool:rotation" then
-            cycle_axis(pos)
-            inform_state(clicker,pos)
-        else
-            load_or_build(player,pointed_thing)
-        end
-        return false
+		local payload = pmeta:get_string("payload")
+		if payload ~= "" then
+			print(payload)
+			super_build(pos,placer,payload)
+			return
+		end
+		local center = pmeta:get_string("center")
+		if center ~= "" and payload == "" then
+			local opos=minetest.deserialize(pmeta:get_string("center"))
+			pickup(opos,placer)
+		    remove_entity(opos)
+			center = pmeta:get_string("center")
+		end
+		if  center == "" then
+			pmeta:set_int("axis",1)
+			pmeta:set_string("center",minetest.serialize(pos))
+			inform_state(placer)
+			show_entity(pos,1)
+		end
     end,
     on_use = function(itemstack, player, pointed_thing)
-        load_or_build(player,pointed_thing)
+        local pmeta = player:get_meta()
+		if pointed_thing.type == "nothing" then
+			pmeta:set_string("payload",nil)
+			minetest.chat_send_player(player:get_player_name(),"Cleared.")
+			inform_state(player)
+		end
+		if pointed_thing.type == "node" then
+	        local node_name = minetest.get_node(pointed_thing.under).name
+			local payload = pmeta:get_string("payload")
+			if (node_name == "symmetool:mirror" and player:get_player_control().sneak) or
+					( node_name == "symmetool:mirror" and payload == "" ) then
+				print("spanking tool")
+				pickup(pointed_thing.under,player)
+			    remove_entity(pointed_thing.under)
+				return
+			end
+			if pmeta:get_string("center") ~= "" then
+				if payload == "" then
+					pmeta:set_string("payload",node_name)
+					minetest.chat_send_player(player:get_player_name(),"Now building with "..node_name)
+				else
+					pickup(pointed_thing.under,player)
+					print("BOINGGGG")
+				end
+			else
+				if payload ~= "" then
+					pickup(pointed_thing.under,player)
+					print("BOOB")
+				end
+			end
+		end
     end,
---     can_dig = function(pos,player)
---         return true
---     end,
+-- 	after_dig_node = function(pos, oldnode, oldmetadata, digger)
+-- 		if digger:get_player_name() ~= "" then
+-- 			local pmeta = digger:get_meta()
+-- 			pmeta:set_string("payload",nil)
+-- 			pmeta:set_string("center",nil)
+-- 		end
+-- 		remove_entity(pos)
+-- 	end,
 })
 
 for _,axis in pairs(symmetool.axis_list) do
@@ -235,18 +246,19 @@ end
 
 minetest.register_on_leaveplayer(function(player)
     local pmeta = player:get_meta()
-    if pmeta:get_string("pos") ~= "" then
-        local opos=minetest.deserialize(pmeta:get_string("pos"))
-        pickup(player,opos)
+    if pmeta:get_string("center") ~= "" then
+        local opos=minetest.deserialize(pmeta:get_string("center"))
+        pickup(opos,player)
+	    remove_entity(pos)
     end
-    pmeta:set_string("pos",nil)
-    pmeta:set_string("load",nil)
+    pmeta:set_string("center",nil)
+    pmeta:set_string("payload",nil)
 end)
 
 minetest.register_on_joinplayer(function(player)
     local pmeta = player:get_meta()
-    pmeta:set_string("pos",nil)
-    pmeta:set_string("load",nil)
+    pmeta:set_string("center",nil)
+    pmeta:set_string("payload",nil)
 end)
 
 
