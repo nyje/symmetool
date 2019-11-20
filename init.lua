@@ -1,28 +1,39 @@
 -- symmetool v0.1
 -- (c)2019 Nigel Garnett.
 
+-- ======================================= --
+-- User Settings
+-- ======================================= --
+
+local max_range = 50
+local l = 2
+local axis_colors = { x="#FF0000", y="#00FF00", z="#0000FF" }
+local default_axis = 6
+
+
+-- ======================================= --
+-- Main vars
+-- ======================================= --
+
 symmetool = {}
 symmetool.axis_list = { "X-Axis","Y-Axis","Z-Axis","XY-Axes","YZ-Axes","XZ-Axes","XYZ-Axes" }
-
-
-local l = 2
 local boxen = {}
     boxen.x =   { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)} }
     boxen.y =   { {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)} }
     boxen.z =   { {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
-    boxen.xy =  { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
-                  {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)} }
-    boxen.yz =  { {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)},
-                  {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
-    boxen.xz =  { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
-                  {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
-    boxen.xyz = { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
-                  {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)},
-                  {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
+--     boxen.xy =  { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
+--                   {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)} }
+--     boxen.yz =  { {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)},
+--                   {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
+--     boxen.xz =  { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
+--                   {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
+--     boxen.xyz = { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
+--                   {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)},
+--                   {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
 
-local axis_colors = { x="#FF0000", y="#00FF00", z="#0000FF" }
-
-local axis = 1
+-- ======================================= --
+-- Local functions
+-- ======================================= --
 
 local function flip(pos,center,axis)
     local new_pos = {x = pos.x, y = pos.y, z = pos.z }
@@ -130,6 +141,9 @@ local function pickup(pos,player)
     super_build(pos,player,"air")
 end
 
+-- ======================================= --
+-- Symmetool Mirror Node definition
+-- ======================================= --
 
 minetest.register_node("symmetool:mirror", {
     description = "Mirror Symmetry Tool",
@@ -144,6 +158,8 @@ minetest.register_node("symmetool:mirror", {
     groups = {cracky = 3, snappy = 3, crumbly = 3},
     on_blast = function() end,
     after_place_node = function(pos, placer, itemstack, pointed_thing)
+        local pmeta = placer:get_meta()
+		local center_string = pmeta:get_string("center")
 		local node_name = minetest.get_node(pointed_thing.under).name
 		if node_name == "symmetool:mirror" then
 			cycle_axis(placer)
@@ -151,30 +167,37 @@ minetest.register_node("symmetool:mirror", {
 			replace_node(pos,placer,"air")
 			return
 		end
-        local pmeta = placer:get_meta()
 		local payload = pmeta:get_string("payload")
 		if payload ~= "" then
-			print(payload)
+            local center_pos = minetest.deserialize( center_string)
+            if (center_string ~= "") and 
+                    (vector.distance( center_pos, pointed_thing.under) > max_range) then
+                minetest.chat_send_player(placer:get_player_name(),"Too far from center, marker removed.")
+                pickup(center_pos,placer)
+                remove_entity(center_pos)
+    			replace_node(pos,placer,"air")
+                return
+            end
 			super_build(pos,placer,payload)
 			return
 		end
-		local center = pmeta:get_string("center")
-		if center ~= "" and payload == "" then
-			local opos=minetest.deserialize(pmeta:get_string("center"))
-			pickup(opos,placer)
-		    remove_entity(opos)
-			center = pmeta:get_string("center")
+		if center_string ~= "" and payload == "" then
+			local center_pos=minetest.deserialize(pmeta:get_string("center"))
+			pickup(center_pos,placer)
+		    remove_entity(center_pos)
+			center_string = pmeta:get_string("center")
 		end
-		if  center == "" then
-			pmeta:set_int("axis",1)
+		if  center_string == "" then
+			pmeta:set_int("axis",default_axis)
 			pmeta:set_string("center",minetest.serialize(pos))
 			inform_state(placer)
-			show_entity(pos,1)
+			show_entity(pos,default_axis)
 		end
     end,
     on_use = function(itemstack, player, pointed_thing)
         local pmeta = player:get_meta()
-		if pointed_thing.type == "nothing" then
+		local center_string = pmeta:get_string("center")
+		if pointed_thing.type == "nothing" and center_string ~= "" then
 			pmeta:set_string("payload",nil)
 			minetest.chat_send_player(player:get_player_name(),"Cleared.")
 			inform_state(player)
@@ -184,16 +207,22 @@ minetest.register_node("symmetool:mirror", {
 			local payload = pmeta:get_string("payload")
 			if (node_name == "symmetool:mirror" and player:get_player_control().sneak) or
 					( node_name == "symmetool:mirror" and payload == "" ) then
-				print("spanking tool")
 				pickup(pointed_thing.under,player)
 			    remove_entity(pointed_thing.under)
 				return
 			end
-			if pmeta:get_string("center") ~= "" then
+			if center_string ~= "" then
 				if payload == "" then
 					pmeta:set_string("payload",node_name)
 					minetest.chat_send_player(player:get_player_name(),"Now building with "..node_name)
 				else
+                    local center_pos = minetest.deserialize( center_string)
+                    if vector.distance( center_pos, pointed_thing.under) > max_range then
+                        minetest.chat_send_player(player:get_player_name(),"Too far from center, marker removed.")
+                        pickup(center_pos,player)
+                        remove_entity(center_pos)
+                        return
+                    end
 					pickup(pointed_thing.under,player)
 				end
 			else
@@ -214,6 +243,10 @@ minetest.register_node("symmetool:mirror", {
 		remove_entity(pos)
 	end,
 })
+
+-- ======================================= --
+-- 3 axis (X,Y,Z) entity & model node definition 
+-- ======================================= --
 
 for axis_name,axis_color in pairs(axis_colors) do
     local box = boxen[axis_name]
@@ -245,14 +278,17 @@ for axis_name,axis_color in pairs(axis_colors) do
         drop = "",
     })
 end
---not_in_creative_inventory = 1
+
+-- ======================================= --
+-- Registrations
+-- ======================================= --
 
 minetest.register_on_leaveplayer(function(player)
     local pmeta = player:get_meta()
     if pmeta:get_string("center") ~= "" then
         local opos=minetest.deserialize(pmeta:get_string("center"))
         pickup(opos,player)
-	    remove_entity(pos)
+	    remove_entity(opos)
     end
     pmeta:set_string("center",nil)
     pmeta:set_string("payload",nil)
@@ -263,5 +299,3 @@ minetest.register_on_joinplayer(function(player)
     pmeta:set_string("center",nil)
     pmeta:set_string("payload",nil)
 end)
-
-
