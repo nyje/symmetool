@@ -1,4 +1,3 @@
-
 Symmetool by Nigel Garnett
 ==========================
 
@@ -18,7 +17,14 @@ Code & anything distributed with this license except items mentioned below is li
             DEALINGS IN THE SOFTWARE.
 
 ==========================
+Object:     Axis visualisation Code
+Source:     Based on "Protector Redo" mod marker visualisation code (https://notabug.org/TenPlus1/protector)
+Author:     TenPlus1
+License:    MIT (see above)
 
+
+
+==========================
 Object:     mymeshnodes_sphere.obj 
 Source:     mymeshnodes minetest mod (https://github.com/DonBatman/mymeshnodes)
 Author:     DonBatman
