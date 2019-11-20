@@ -156,7 +156,7 @@ minetest.register_node("symmetool:rotation", {
     description = "Circular Symmetry Tool",
     drawtype = "mesh",
     mesh = "mymeshnodes_sphere.obj",
-    tiles = {"superblock_plain_ball.png^[colorize:#ff00ff:100"},
+    tiles = {"symmetool_plain.png^[colorize:#ff00ff:100"},
     is_ground_content = false,
     selection_box = {-0.5, -0.5, -0.5, 0.5, 0.5, 0.5},
     stack_max = 1,
