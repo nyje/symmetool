@@ -20,6 +20,8 @@ local boxen = {}
                   {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)},
                   {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
 
+local axis_colors = { x="#FF0000", y="#00FF00", z="#0000FF" }
+
 local axis = 1
 
 local function flip(pos,center,axis)
@@ -45,7 +47,9 @@ end
 local function show_entity(pos,axis)
     local aname = string.lower(string.split(symmetool.axis_list[axis],"-")[1])
     remove_entity(pos)
-    minetest.add_entity(pos, "symmetool:"..aname.."axis")
+    for i = 1,#aname do
+        minetest.add_entity(pos, "symmetool:"..string.sub(aname,i,i).."axis")
+    end
 end
 
 local function replace_node(pos,player,node_name)
@@ -211,21 +215,20 @@ minetest.register_node("symmetool:mirror", {
 	end,
 })
 
-for _,axis in pairs(symmetool.axis_list) do
-    local aname = string.lower(string.split(axis,"-")[1])
-    local box = boxen[aname]
-    minetest.register_entity("symmetool:"..aname.."axis", {
+for axis_name,axis_color in pairs(axis_colors) do
+    local box = boxen[axis_name]
+    minetest.register_entity("symmetool:"..axis_name.."axis", {
         physical = false,
         collisionbox = {0, 0, 0, 0, 0, 0},
         visual = "wielditem",
         -- wielditem seems to be scaled to 1.5 times original node size
-        visual_size = {x = 0.33, y = 0.33},
-        textures = {"symmetool:"..aname.."_axis_node"},
+        --visual_size = {x = 0.67, y = 0.67},
+        textures = {"symmetool:"..axis_name.."_axis_node"},
         timer = 0,
         glow = 10,
     })
-    minetest.register_node("symmetool:"..aname.."_axis_node", {
-        tiles = {"symmetool_wall.png"},
+    minetest.register_node("symmetool:"..axis_name.."_axis_node", {
+        tiles = {"symmetool_wall.png^[colorize:"..axis_color.."60"},
         --use_texture_alpha = true,
         walkable = false,
         light_source = core.LIGHT_MAX,
