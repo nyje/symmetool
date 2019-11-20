@@ -100,8 +100,8 @@ local function super_build(pos,player,node_name)
 			coords = new_coords
         end
         for _,coord in pairs(coords) do
-			if node_name == "air" then
-				local old_node_name = minetest.get_node(coord).name
+			local old_node_name = minetest.get_node(coord).name
+			if node_name == "air" and old_node_name ~= "air" then
 				local inv = player:get_inventory()
 				if not (creative and creative.is_enabled_for
 						and creative.is_enabled_for(player:get_player_name()))
