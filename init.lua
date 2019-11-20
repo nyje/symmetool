@@ -108,11 +108,11 @@ local function super_build(player,pos,pload)
         local coords = { pos }
         for i = 1,#reflect_axes do
             local this_axis = string.sub(reflect_axes,i,i)
-            for _,coord in pairs(coords)
+            for _,coord in pairs(coords) do
                 coords[#coords+1] = flip(coord,center,this_axis)
             end
         end
-        for _,coord in pairs(coords)
+        for _,coord in pairs(coords) do
             minetest.set_node(coord,{name=pload})
         end
     end
