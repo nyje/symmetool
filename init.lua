@@ -128,7 +128,7 @@ end
 
 
 minetest.register_node("symmetool:mirror", {
-    description = "Circular Symmetry Tool",
+    description = "Mirror Symmetry Tool",
     drawtype = "mesh",
     mesh = "mymeshnodes_sphere.obj",
     tiles = {"symmetool_plain.png^[colorize:#ff00ff:100"},
@@ -191,24 +191,24 @@ minetest.register_node("symmetool:mirror", {
 					minetest.chat_send_player(player:get_player_name(),"Now building with "..node_name)
 				else
 					pickup(pointed_thing.under,player)
-					print("BOINGGGG")
 				end
 			else
 				if payload ~= "" then
 					pickup(pointed_thing.under,player)
-					print("BOOB")
 				end
 			end
 		end
     end,
--- 	after_dig_node = function(pos, oldnode, oldmetadata, digger)
--- 		if digger:get_player_name() ~= "" then
--- 			local pmeta = digger:get_meta()
--- 			pmeta:set_string("payload",nil)
--- 			pmeta:set_string("center",nil)
--- 		end
--- 		remove_entity(pos)
--- 	end,
+	after_dig_node = function(pos, oldnode, oldmetadata, digger)
+		if digger:get_player_name() ~= "" then
+            if oldnode.name == "symmetool:mirror" then
+                local pmeta = digger:get_meta()
+                pmeta:set_string("payload",nil)
+                pmeta:set_string("center",nil)
+            end
+		end
+		remove_entity(pos)
+	end,
 })
 
 for _,axis in pairs(symmetool.axis_list) do
