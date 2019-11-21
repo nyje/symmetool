@@ -1,35 +1,25 @@
--- symmetool v0.1
+-- Symmetool v1.0
 -- (c)2019 Nigel Garnett.
+
 
 -- ======================================= --
 -- User Settings
 -- ======================================= --
-
-local max_range = 50
-local l = 2
-local axis_colors = { x="#FF0000", y="#00FF00", z="#0000FF" }
-local default_axis = 6
+local max_range		= 50
+local marker_length = 2
+local axis_colors	= { x = "#FF0000", y = "#00FF00", z = "#0000FF" }
+local default_axis	= 6  -- (XZ Axes - good for towers & castles)
 
 
 -- ======================================= --
 -- Main vars
 -- ======================================= --
-
-symmetool = {}
-symmetool.axis_list = { "X-Axis","Y-Axis","Z-Axis","XY-Axes","YZ-Axes","XZ-Axes","XYZ-Axes" }
+--symmetool = {}
+local axis_list = { "X-Axis","Y-Axis","Z-Axis","XY-Axes","YZ-Axes","XZ-Axes","XYZ-Axes" }
 local boxen = {}
-    boxen.x =   { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)} }
-    boxen.y =   { {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)} }
-    boxen.z =   { {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
---     boxen.xy =  { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
---                   {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)} }
---     boxen.yz =  { {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)},
---                   {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
---     boxen.xz =  { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
---                   {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
---     boxen.xyz = { {-.05, -(l+.05), -(l+.05), .05, (l+.05), (l+.05)},
---                   {-(l+.05), -.05, -(l+.05), (l+.05), .05, (l+.05)},
---                   {-(l+.05), -(l+.05), -.05, (l+.05), (l+.05), .05} }
+    boxen.x =   { {-.05, -(marker_length+.05), -(marker_length+.05), .05, (marker_length+.05), (marker_length+.05)} }
+    boxen.y =   { {-(marker_length+.05), -.05, -(marker_length+.05), (marker_length+.05), .05, (marker_length+.05)} }
+    boxen.z =   { {-(marker_length+.05), -(marker_length+.05), -.05, (marker_length+.05), (marker_length+.05), .05} }
 
 -- ======================================= --
 -- Local functions
@@ -56,7 +46,7 @@ local function remove_entity(pos)
 end
 
 local function show_entity(pos,axis)
-    local aname = string.lower(string.split(symmetool.axis_list[axis],"-")[1])
+    local aname = string.lower(string.split(axis_list[axis],"-")[1])
     remove_entity(pos)
     for i = 1,#aname do
         minetest.add_entity(pos, "symmetool:"..string.sub(aname,i,i).."axis")
@@ -89,9 +79,9 @@ local function inform_state(player)
 	if payload == "" then
 		payload = minetest.colorize('#F55'," Punch a node with the tool to start building")
 	else
-		payload = minetest.colorize('#5FF'," Building with "..payload)
+		payload = minetest.colorize('#F5F'," Building with ")..minetest.colorize('#9FF',payload)
 	end
-	minetest.chat_send_player(player:get_player_name(), minetest.colorize('#5F5', symmetool.axis_list[a])..payload)
+	minetest.chat_send_player(player:get_player_name(), minetest.colorize('#5F5', axis_list[a])..payload)
 end
 
 local function super_build(pos,player,node_name)
@@ -99,7 +89,7 @@ local function super_build(pos,player,node_name)
     if pmeta:get_string("center") ~= "" then
         local center = minetest.deserialize(pmeta:get_string("center"))
         local axis = pmeta:get_int("axis")
-        local reflect_axes = string.lower(string.split(symmetool.axis_list[axis],"-")[1])
+        local reflect_axes = string.lower(string.split(axis_list[axis],"-")[1])
         local coords = { pos }
         for i = 1,#reflect_axes do
             local this_axis = string.sub(reflect_axes,i,i)
@@ -215,7 +205,8 @@ minetest.register_node("symmetool:mirror", {
 			if center_string ~= "" then
 				if payload == "" then
 					pmeta:set_string("payload",node_name)
-					minetest.chat_send_player(player:get_player_name(), minetest.colorize("#F5F", "Now building with "..node_name))
+					minetest.chat_send_player(player:get_player_name(), minetest.colorize("#F5F", "Now building with ")..
+																		minetest.colorize("#9FF", node_name))
 				else
                     local center_pos = minetest.deserialize( center_string)
                     if vector.distance( center_pos, pointed_thing.under) > max_range then
