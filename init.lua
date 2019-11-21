@@ -87,11 +87,11 @@ local function inform_state(player)
     local a = pmeta:get_int("axis")
     local payload = pmeta:get_string("payload")
 	if payload == "" then
-		payload = " Punch a node with the tool to start building"
+		payload = minetest.colorize('#F55'," Punch a node with the tool to start building")
 	else
-		payload = " Building with "..payload
+		payload = minetest.colorize('#5FF'," Building with "..payload)
 	end
-	minetest.chat_send_player(player:get_player_name(), symmetool.axis_list[a]..payload)
+	minetest.chat_send_player(player:get_player_name(), minetest.colorize('#5F5', symmetool.axis_list[a])..payload)
 end
 
 local function super_build(pos,player,node_name)
@@ -170,9 +170,10 @@ minetest.register_node("symmetool:mirror", {
 		local payload = pmeta:get_string("payload")
 		if payload ~= "" then
             local center_pos = minetest.deserialize( center_string)
-            if (center_string ~= "") and 
+            if (center_string ~= "") and
                     (vector.distance( center_pos, pointed_thing.under) > max_range) then
-                minetest.chat_send_player(placer:get_player_name(),"Too far from center, marker removed.")
+                minetest.chat_send_player(placer:get_player_name(),
+										  minetest.colorize("#FFF", "Too far from center, marker removed."))
                 pickup(center_pos,placer)
                 remove_entity(center_pos)
     			replace_node(pos,placer,"air")
@@ -199,7 +200,7 @@ minetest.register_node("symmetool:mirror", {
 		local center_string = pmeta:get_string("center")
 		if pointed_thing.type == "nothing" and center_string ~= "" then
 			pmeta:set_string("payload",nil)
-			minetest.chat_send_player(player:get_player_name(),"Cleared.")
+			minetest.chat_send_player(player:get_player_name(), minetest.colorize("#F5F", "Cleared."))
 			inform_state(player)
 		end
 		if pointed_thing.type == "node" then
@@ -214,11 +215,11 @@ minetest.register_node("symmetool:mirror", {
 			if center_string ~= "" then
 				if payload == "" then
 					pmeta:set_string("payload",node_name)
-					minetest.chat_send_player(player:get_player_name(),"Now building with "..node_name)
+					minetest.chat_send_player(player:get_player_name(), minetest.colorize("#F5F", "Now building with "..node_name))
 				else
                     local center_pos = minetest.deserialize( center_string)
                     if vector.distance( center_pos, pointed_thing.under) > max_range then
-                        minetest.chat_send_player(player:get_player_name(),"Too far from center, marker removed.")
+                        minetest.chat_send_player(player:get_player_name(), minetest.colorize("#FFF", "Too far from center, marker removed."))
                         pickup(center_pos,player)
                         remove_entity(center_pos)
                         return
@@ -245,7 +246,7 @@ minetest.register_node("symmetool:mirror", {
 })
 
 -- ======================================= --
--- 3 axis (X,Y,Z) entity & model node definition 
+-- 3 axis (X,Y,Z) entity & model node definition
 -- ======================================= --
 
 for axis_name,axis_color in pairs(axis_colors) do
