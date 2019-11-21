@@ -139,7 +139,7 @@ minetest.register_node("symmetool:mirror", {
     description = "Mirror Symmetry Tool",
     drawtype = "mesh",
     mesh = "mymeshnodes_sphere.obj",
-    tiles = {"symmetool_plain.png^[colorize:#55ffff:100"},
+    tiles = {"symmetool_plain.png^[colorize:#00ffff:100"},
     is_ground_content = false,
     selection_box = {-0.5, -0.5, -0.5, 0.5, 0.5, 0.5},
     stack_max = 1,
