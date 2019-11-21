@@ -160,14 +160,14 @@ minetest.register_node("symmetool:mirror", {
     after_place_node = function(pos, placer, itemstack, pointed_thing)
         local pmeta = placer:get_meta()
 		local center_string = pmeta:get_string("center")
+		local payload = pmeta:get_string("payload")
 		local node_name = minetest.get_node(pointed_thing.under).name
-		if node_name == "symmetool:mirror" then
+		if node_name == "symmetool:mirror" and payload == "" then
 			cycle_axis(placer)
 			inform_state(placer)
 			replace_node(pos,placer,"air")
 			return
 		end
-		local payload = pmeta:get_string("payload")
 		if payload ~= "" then
             local center_pos = minetest.deserialize( center_string)
             if (center_string ~= "") and
