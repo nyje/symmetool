@@ -137,12 +137,22 @@ end
 
 minetest.register_node("symmetool:mirror", {
     description = "Mirror Symmetry Tool",
-    drawtype = "mesh",
-    mesh = "mymeshnodes_sphere.obj",
-    tiles = {"symmetool_plain.png^[colorize:#00ffff:100"},
+    --drawtype = "mesh",
+    --mesh = "symmetool_miror.obj",
+	drawtype = "nodebox",
+	paramtype = "light",
+	node_box = {
+		type = "fixed",
+		fixed = { {-0.125, -0.5, -0.5, 0.125, 0.5, 0.5},
+				  {-0.5, -0.125, -0.5, 0.5, 0.125, 0.5},
+				  {-0.5, -0.5, -0.125, 0.5, 0.5, 0.125},
+				}
+	},
+    tiles = {"symmetool_mirror.png^[colorize:#00ffff:100"},
     is_ground_content = false,
     selection_box = {-0.5, -0.5, -0.5, 0.5, 0.5, 0.5},
     stack_max = 1,
+	visual_size = {x = 2, y = 2},
     light_source = core.LIGHT_MAX,
     sunlight_propagates = 1,
     groups = {cracky = 3, snappy = 3, crumbly = 3},
@@ -250,7 +260,7 @@ for axis_name,axis_color in pairs(axis_colors) do
         --visual_size = {x = 0.67, y = 0.67},
         textures = {"symmetool:"..axis_name.."_axis_node"},
         timer = 0,
-        glow = 10,
+        glow = 14,
     })
     minetest.register_node("symmetool:"..axis_name.."_axis_node", {
         tiles = {"symmetool_wall.png^[colorize:"..axis_color.."60"},
@@ -286,8 +296,8 @@ minetest.register_on_leaveplayer(function(player)
     pmeta:set_string("payload",nil)
 end)
 
-minetest.register_on_joinplayer(function(player)
-    local pmeta = player:get_meta()
-    pmeta:set_string("center",nil)
-    pmeta:set_string("payload",nil)
-end)
+-- minetest.register_on_joinplayer(function(player)
+--     local pmeta = player:get_meta()
+--     pmeta:set_string("center",nil)
+--     pmeta:set_string("payload",nil)
+-- end)
