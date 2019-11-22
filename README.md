@@ -7,7 +7,7 @@ It is designed to speed up building structures which have mirror symmetry in one
 
 It is designed for use in creative mode and so has no crafting recipe, however it should work fine in survival mode if you have admin privs. 
 
-It has only been tested on desktop but only uses the left/right mouse buttons, so should work fine on phones/tablets. In this case I _***believe***_ "***double tap***"="***right click***" _(how you place stuff)_ and "***long tap***"="***left click***" _(how you dig stuff)_, although this is entirely untested ;-)
+It has only been tested on desktop but only uses the left/right mouse buttons, so should work fine on phones/tablets. In this case I believe "***double tap***"="***right click***" _(how you place stuff)_ and "***long tap***"="***left click***" _(how you dig stuff)_, although this is entirely untested ;-)
 
 
 ### Basics ###
