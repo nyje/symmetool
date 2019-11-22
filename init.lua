@@ -34,12 +34,10 @@ end
 
 local function remove_entities(pos)
     local aobj = minetest.get_objects_inside_radius(pos, 1)
-    if aobj then
-        for _, obj in ipairs(aobj) do
-            if obj then
-                if not obj:is_player() then
-                    obj:remove()
-                end
+    for _, obj in ipairs(aobj) do
+        if obj then
+            if not obj:is_player() then
+                obj:remove()
             end
         end
     end
@@ -58,7 +56,7 @@ end
 local function replace_node(pos, player, node_name)
     if pos then
 		if not minetest.is_protected(pos, player:get_player_name()) then
-			minetest.place_node(pos, {name = node_name})
+			minetest.set_node(pos, {name = node_name})
 		end
     end
 end
@@ -258,11 +256,9 @@ minetest.register_node("symmetool:mirror", {
 
 	after_dig_node = function(pos, oldnode, oldmetadata, digger)
 		if digger:get_player_name() ~= "" then
-            if oldnode.name == "symmetool:mirror" then
-                local pmeta = digger:get_meta()
-                pmeta:set_string("payload", nil)
-                pmeta:set_string("center", nil)
-            end
+            local pmeta = digger:get_meta()
+            pmeta:set_string("payload", nil)
+            pmeta:set_string("center", nil)
 		end
 		remove_entities(pos)
 	end,
