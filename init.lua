@@ -58,7 +58,7 @@ end
 local function replace_node(pos, player, node_name)
     if pos then
 		if not minetest.is_protected(pos, player:get_player_name()) then
-			minetest.set_node(pos, {name = node_name})
+			minetest.place_node(pos, {name = node_name})
 		end
     end
 end
