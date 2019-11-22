@@ -7,14 +7,14 @@ It is designed to speed up building structures which have mirror symmetry in one
 
 It is designed for use in creative mode and so has no crafting recipe, however it should work fine in survival mode if you have admin privs. 
 
-It has only been tested on desktop but only uses the left/right mouse buttons, so should work fine on phones/tablets. In this case I believe "double tap"="right click" (how you place stuff) and "long tap"="left click" (how you dig stuff).
+It has only been tested on desktop but only uses the left/right mouse buttons, so should work fine on phones/tablets. In this case I believe "double tap"="right click" _(how you place stuff)_ and "long tap"="left click" _(how you dig stuff)_.
 
 
 ### Basics ###
 Place the symmetry tool as you would any normal block. This creates the marker which will act as the mirror across which nodes will be mirrored.
 
-At this stage (or any time the tool is not 'loaded' (see later)) the controls do the following:
-- ***Left clicking the node*** will remove it (or it can be dug as normal whilst holding almost any other node)
+At this stage (or any time the tool is not 'loaded' _(see below)_) the controls do the following:
+- ***Left clicking the node*** will remove it _(or it can be dug as normal whilst holding almost any other node)_.
 - ***Right clicking on the node*** will cycle through the symmetry modes, which are shown visually, and in the in game chat. After ten seconds, the visual markers will disappear, but the node's infotext will indicate the mirroring mode.
 - ***Left clicking another node*** will load that node into the tool, and from now on right clicking will build with that node.
 - ***Right clicking another node*** will move the mirror node to the clicked position (you can only have one mirror node in world at any time).
