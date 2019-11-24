@@ -1,8 +1,8 @@
 -- ======================================= --
--- Symmetool v1.0
+-- Symmetool Mirror v1.2
 -- (c)2019 Nigel Garnett.
 -- ======================================= --
--- User Settings
+-- User Settable Variables
 -- ======================================= --
 local max_range = 50
 local length = 2
@@ -14,6 +14,7 @@ local default_axis = 6  -- (XZ Axes - good for towers & castles)
 -- ======================================= --
 -- Main vars
 -- ======================================= --
+m_node = "symmetool:mirror"
 local axis_list = {"X-Axis","Y-Axis","Z-Axis","XY-Axes","YZ-Axes","XZ-Axes","XYZ-Axes"}
 local boxen = {}
 boxen.x = {{-.05, -(length+.05), -(length+.05), .05, (length+.05), (length+.05)}}
@@ -57,6 +58,7 @@ local function replace_node(pos, player, node_name)
     if pos then
 		if not minetest.is_protected(pos, player:get_player_name()) then
 			minetest.set_node(pos, {name = node_name})
+            minetest.check_for_falling(pos)
 		end
     end
 end
@@ -111,17 +113,9 @@ local function super_build(pos, player, node_name)
 			coords = new_coords
         end
         for _, coord in pairs(coords) do
-			local old_node_name = minetest.get_node(coord).name
-			if node_name == "air" and old_node_name ~= "air" then
-				local inv = player:get_inventory()
-				if not (creative and creative.is_enabled_for and
-								creative.is_enabled_for(player:get_player_name())) or
-								not inv:contains_item("main", old_node_name) then
-					local leftover = inv:add_item("main", old_node_name)
-					if not leftover:is_empty() then
-						minetest.add_item(pos, leftover)
-					end
-				end
+			local old_node = minetest.get_node(coord)
+			if old_node.name ~= "air"  and node_name == "air" then
+                minetest.node_dig(coord,old_node,player)
 			end
 			replace_node(coord, player, node_name)
         end
@@ -132,21 +126,21 @@ end
 
 
 local function pickup(pos, player)
-	local node_name = minetest.get_node(pos).name
-	if node_name == "symmetool:mirror" then
+	local node = minetest.get_node(pos)
+    minetest.node_dig(pos,node,player)
+	if node.name == m_node then
 		local pmeta = player:get_meta()
 		pmeta:set_string("payload", nil)
 		pmeta:set_string("center", nil)
 		remove_entities(pos)
 	end
-    super_build(pos, player, "air")
 end
 
 
 -- ======================================= --
 -- Symmetool Mirror Node definition
 -- ======================================= --
-minetest.register_node("symmetool:mirror", {
+minetest.register_node(m_node, {
     description = "Mirror Symmetry Tool",
 	drawtype = "nodebox",
 	paramtype = "light",
@@ -171,10 +165,10 @@ minetest.register_node("symmetool:mirror", {
 		local payload = pmeta:get_string("payload")
 		local node_name = minetest.get_node(pointed_thing.under).name
 
-		if node_name == "symmetool:mirror" and payload == "" then
+		if node_name == m_node and payload == "" then
+			replace_node(pos, placer, "air")
 			cycle_axis(placer)
 			inform_state(placer)
-			replace_node(pos, placer, "air")
 			return
 		end
 
@@ -182,11 +176,10 @@ minetest.register_node("symmetool:mirror", {
             local center_pos = minetest.deserialize(center_string)
             if (center_string ~= "") and
                     (vector.distance( center_pos, pointed_thing.under) > max_range) then
+    			replace_node(pos, placer, "air")
                 minetest.chat_send_player(placer:get_player_name(), minetest.colorize(
 						"#FFF", "Too far from center, symmetry marker removed."))
                 pickup(center_pos, placer)
-                remove_entities(center_pos)
-    			replace_node(pos, placer, "air")
                 return
             end
 			super_build(pos, placer, payload)
@@ -196,7 +189,6 @@ minetest.register_node("symmetool:mirror", {
 		if center_string ~= "" and payload == "" then
 			local center_pos = minetest.deserialize(pmeta:get_string("center"))
 			pickup(center_pos, placer)
-		    remove_entities(center_pos)
 			center_string = pmeta:get_string("center")
 		end
 
@@ -223,10 +215,9 @@ minetest.register_node("symmetool:mirror", {
 	        local node_name = minetest.get_node(pointed_thing.under).name
 			local payload = pmeta:get_string("payload")
 
-			if (node_name == "symmetool:mirror" and player:get_player_control().sneak) or
-					( node_name == "symmetool:mirror" and payload == "" ) then
+			if (node_name == m_node and player:get_player_control().sneak) or
+					( node_name == m_node and payload == "" ) then
 				pickup(pointed_thing.under,player)
-			    remove_entities(pointed_thing.under)
 				return
 			end
 
@@ -243,13 +234,12 @@ minetest.register_node("symmetool:mirror", {
                         minetest.chat_send_player(pname, minetest.colorize("#FFF",
 								"Too far from center, symmetry marker removed."))
                         pickup(center_pos, player)
-                        remove_entities(center_pos)
                         return
                     end
-					pickup(pointed_thing.under, player)
+					super_build(pointed_thing.under, player,"air")
 				end
 			else
-				pickup(pointed_thing.under, player)
+				super_build(pointed_thing.under, player,"air")
 			end
 		end
     end,
@@ -314,7 +304,6 @@ minetest.register_on_leaveplayer(function(player)
     if pmeta:get_string("center") ~= "" then
         local opos = minetest.deserialize(pmeta:get_string("center"))
         pickup(opos, player)
-	    remove_entities(opos)
     end
     pmeta:set_string("center", nil)
     pmeta:set_string("payload", nil)
