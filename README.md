@@ -1,4 +1,5 @@
-# Symmetool Mirror ***(c)2019 Nigel Garnett***
+# Symmetool Mirror 
+***(c)2019 Nigel Garnett***
 
 A building tool for MineTest which places multiple blocks based on the current mode of its marker's symmetry settings.
 
