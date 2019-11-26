@@ -223,9 +223,6 @@ local function checkrange(mirror_pos, pos, player)
                 "Too far from center, symmetry marker removed."))
         minetest.forceload_block(pos)
         pickup(mirror_pos, player)
-        if minetest.get_node(pos).name == m_node then
-            minetest.set_node(pos,{name = "air"})
-        end
         return true
     end
     return false
@@ -277,6 +274,7 @@ minetest.register_node(m_node, {
             local mirror_pos = minetest.deserialize(pmeta:get_string("mirror"))
             checkrange(mirror_pos,pos,placer)
             pickup(mirror_pos, placer, false)
+            minetest.chat_send_player(placer:get_player_name(), minetest.colorize("#F5F", "pooped"))
             mirror_string = pmeta:get_string("mirror")
         end
 
