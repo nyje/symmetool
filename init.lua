@@ -274,7 +274,6 @@ minetest.register_node(m_node, {
             local mirror_pos = minetest.deserialize(pmeta:get_string("mirror"))
             checkrange(mirror_pos,pos,placer)
             pickup(mirror_pos, placer, false)
-            minetest.chat_send_player(placer:get_player_name(), minetest.colorize("#F5F", "pooped"))
             mirror_string = pmeta:get_string("mirror")
         end
 
