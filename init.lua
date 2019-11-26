@@ -1,5 +1,5 @@
 -- ======================================= --
--- Symmetool Mirror v1.5
+-- Symmetool Mirror v1.5.1
 -- (c)2019 Nigel Garnett.
 -- ======================================= --
 -- User Settable Variables
@@ -90,7 +90,8 @@ end
 
 local function replace_node(pos, player, node_name)
     local placed_ok = false
-    if pos then
+    local current_node = minetest.get_node(pos).name
+    if current_node ~= node_name then
         if not minetest.is_protected(pos, player:get_player_name()) then
             if survival_test(player) and node_name ~= "air" then
                 local inv = player:get_inventory()
@@ -110,10 +111,10 @@ local function replace_node(pos, player, node_name)
                 placed_ok = true
             end
         end
-    end
-    if not placed_ok then
-        if minetest.get_node(pos).name == m_node then
-            minetest.set_node(pos,{name = "air"})
+        if not placed_ok then
+            if minetest.get_node(pos).name == m_node then
+                minetest.set_node(pos,{name = "air"})
+            end
         end
     end
 end
