@@ -1,5 +1,5 @@
 -- ======================================= --
--- Symmetool Mirror v1.4
+-- Symmetool Mirror v1.5
 -- (c)2019 Nigel Garnett.
 -- ======================================= --
 -- User Settable Variables
@@ -9,6 +9,11 @@ local length = 2
 local axis_colors = {x = "#FF0000", y = "#00FF00", z = "#0000FF"}
 local axis_timer = 10
 local default_axis = 6  -- (XZ Axes - good for towers & castles)
+local tool_recipe = {
+    {"default:glass", "default:steel_ingot", "default:glass"},
+    {"default:steel_ingot", "default:meselamp", "default:steel_ingot"},
+    {"default:glass", "default:steel_ingot", "default:glass"},
+}
 
 
 -- ======================================= --
@@ -25,6 +30,35 @@ boxen.z = {{-(length+.05), -(length+.05), -.05, (length+.05), (length+.05), .05}
 -- ======================================= --
 -- Local functions
 -- ======================================= --
+if minetest.get_modpath("default") then
+    minetest.register_craft({
+        output = m_node,
+        recipe = tool_recipe,
+    })
+end
+
+
+local function survival_test(player)
+    if minetest.get_modpath("creative") then
+        if not (creative and creative.is_enabled_for and
+                creative.is_enabled_for(player:get_player_name())) then
+            return true
+        end
+    end
+    return false
+end
+
+
+local function survival_mode(player, pos, itemstack)
+    local survival = false
+    if survival_test(player) then
+        survival = true
+        itemstack:add_item(minetest.get_node(pos))
+    end
+    return survival
+end
+
+
 local function flip(pos, mirror_pos, axis)
     local new_pos = {x = pos.x, y = pos.y, z = pos.z}
     local r = pos[axis] - mirror_pos[axis]
@@ -55,10 +89,31 @@ end
 
 
 local function replace_node(pos, player, node_name)
+    local placed_ok = false
     if pos then
         if not minetest.is_protected(pos, player:get_player_name()) then
-            minetest.set_node(pos, {name = node_name})
-            minetest.check_for_falling(pos)
+            if survival_test(player) and node_name ~= "air" then
+                local inv = player:get_inventory()
+                if inv:contains_item("main", node_name) then
+                    inv:remove_item("main", node_name)
+                    minetest.set_node(pos, {name = node_name})
+                    minetest.check_for_falling(pos)
+                    placed_ok = true
+                else
+                    local msg = "!!! No "..node_name.." in inventory to build with."
+                    minetest.chat_send_player(player:get_player_name(),
+                            minetest.colorize('#F55', msg))
+                end
+            else
+                minetest.set_node(pos, {name = node_name})
+                minetest.check_for_falling(pos)
+                placed_ok = true
+            end
+        end
+    end
+    if not placed_ok then
+        if minetest.get_node(pos).name == m_node then
+            minetest.set_node(pos,{name = "air"})
         end
     end
 end
@@ -125,9 +180,13 @@ local function super_build(pos, player, node_name)
 end
 
 
-local function pickup(pos, player)
+local function pickup(pos, player, keepit)
     local node = minetest.get_node(pos)
-    minetest.node_dig(pos,node,player)
+    if keepit then
+        minetest.node_dig(pos,node,player)
+    else
+        replace_node(pos, player, "air")
+    end
     if node.name == m_node then
         local pmeta = player:get_meta()
         pmeta:set_string("payload", nil)
@@ -142,6 +201,9 @@ local function checkrange(mirror_pos, pos, player)
                 "Too far from center, symmetry marker removed."))
         minetest.forceload_block(pos)
         pickup(mirror_pos, player)
+        if minetest.get_node(pos).name == m_node then
+            minetest.set_node(pos,{name = "air"})
+        end
         return true
     end
     return false
@@ -166,7 +228,7 @@ minetest.register_node(m_node, {
     stack_max = 1,
     light_source = core.LIGHT_MAX,
     sunlight_propagates = 1,
-    groups = {cracky = 1, snappy = 1, crumbly = 1},
+    groups = {oddly_breakable_by_hand = 3, cracky = 3, snappy = 3, crumbly = 3},
 
     after_place_node = function(pos, placer, itemstack, pointed_thing)
         local pmeta = placer:get_meta()
@@ -178,7 +240,7 @@ minetest.register_node(m_node, {
             replace_node(pos, placer, "air")
             cycle_axis(placer)
             inform_state(placer)
-            return
+            return survival_mode(placer, pos, itemstack)
         end
 
         if payload ~= "" then
@@ -186,13 +248,13 @@ minetest.register_node(m_node, {
             if not checkrange(mirror_pos,pos,placer) then
                 super_build(pos, placer, payload)
             end
-            return
+            return survival_mode(placer, pos, itemstack)
         end
 
         if mirror_string ~= "" and payload == "" then
             local mirror_pos = minetest.deserialize(pmeta:get_string("mirror"))
             checkrange(mirror_pos,pos,placer)
-            pickup(mirror_pos, placer)
+            pickup(mirror_pos, placer, false)
             mirror_string = pmeta:get_string("mirror")
         end
 
@@ -202,6 +264,8 @@ minetest.register_node(m_node, {
             inform_state(placer)
             add_entities(pos, default_axis)
         end
+
+        return survival_mode(placer, pos, itemstack)
     end,
 
     on_use = function(itemstack, player, pointed_thing)
@@ -219,9 +283,8 @@ minetest.register_node(m_node, {
             local node_name = minetest.get_node(pointed_thing.under).name
             local payload = pmeta:get_string("payload")
 
-            if (node_name == m_node and player:get_player_control().sneak) or
-                    ( node_name == m_node and payload == "" ) then
-                pickup(pointed_thing.under,player)
+            if node_name == m_node then
+                pickup(pointed_thing.under,player,false)
                 return
             end
 
@@ -238,7 +301,7 @@ minetest.register_node(m_node, {
                     end
                 end
             else
-                super_build(pointed_thing.under, player,"air")
+                pickup(pointed_thing.under,player,true)
             end
         end
     end,

@@ -1,7 +1,7 @@
 Symmetool by Nigel Garnett
 ==========================
 
-Code & anything distributed with this mod except items mentioned below is licensed as follows:
+Code & anything distributed with this mod except code or resources mentioned below is licensed as follows:
 
             Copyright (c) 2019 Nigel Garnett under the MIT licence, which is reproduced below.
 
@@ -17,6 +17,7 @@ Code & anything distributed with this mod except items mentioned below is licens
             FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
             LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
             DEALINGS IN THE SOFTWARE.
+
 
 ==========================
 Object:     Axis visualisation Code

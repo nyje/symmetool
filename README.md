@@ -1,4 +1,4 @@
-# Symmetool Mirror 
+# Symmetool Mirror
 ***(c)2019 Nigel Garnett***
 
 A building tool for MineTest which places multiple blocks based on the current mode of its marker's symmetry settings.
@@ -6,7 +6,13 @@ A building tool for MineTest which places multiple blocks based on the current m
 ### Description & caveats ###
 It is designed to speed up building structures which have mirror symmetry in one, two or all three dimensions. It does this by mirroring nodes placed or dug with the tool in the X, Y & Z directions across a 'virtual mirror' which is marked by the tool placed 'in world'.
 
-It is designed for use in creative mode and so has no crafting recipe, however it should work fine in survival mode if you have admin privs. 
+It can be used in creative mode, or in survival. For survival mode it soft depends on default for its crafting recipe:
+
+    "default:glass"        "default:steel_ingot"      "default:glass"
+    "default:steel_ingot"  "default:meselamp"         "default:steel_ingot"
+    "default:glass"        "default:steel_ingot"      "default:glass"
+
+In survival mode, the materials the tool tries to use for building must be available in your main inventory somewhere.
 
 It has only been tested on desktop but only uses the left/right mouse buttons, so should work fine on phones/tablets. In this case I believe "***double tap***"="***right click***" _(how you place stuff)_ and "***long tap***"="***left click***" _(how you dig stuff)_, although this is entirely untested ;-)
 
@@ -27,7 +33,7 @@ From now on, until the tool is unloaded:
 - ***Left clicking the sky (or nothing)*** will unload the tool so you can choose another node to build with.
 
 
-Protection is respected for each individual node placement or removal, so the tool should be safe for multiplayer use. 
+Protection is respected for each individual node placement or removal, so the tool should be safe for multiplayer use.
 
 
 Happy building ;-)
