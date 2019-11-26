@@ -16,7 +16,7 @@ In survival mode, the materials the tool tries to use for building must be avail
 
 It has only been tested on desktop but only uses the left/right mouse buttons, so should work fine on phones/tablets. In this case I believe "***double tap***"="***right click***" _(how you place stuff)_ and "***long tap***"="***left click***" _(how you dig stuff)_, although this is entirely untested ;-)
 
-***WARNING Respect of protection mods is still not fully tested - allow players in multiplayer to use the tool at your own risk until v1.6***
+Testing has shown that protection mods are respected, the mod ***should*** be safe to use on multiplayer servers.
 
 ### Basics ###
 Place the symmetry tool as you would any normal block. This creates the marker which will act as the mirror across which nodes will be mirrored.

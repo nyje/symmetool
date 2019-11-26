@@ -88,24 +88,45 @@ local function add_entities(pos, axis)
 end
 
 
-local function replace_node(pos, player, node_name)
-    local placed_ok = false
-    local current_node = minetest.get_node(pos).name
-    if current_node ~= node_name then
-        if not minetest.is_protected(pos, player:get_player_name()) then
-            if survival_test(player) and node_name ~= "air" then
-                local inv = player:get_inventory()
-                if inv:contains_item("main", node_name) then
-                    inv:remove_item("main", node_name)
-                    minetest.set_node(pos, {name = node_name})
-                    minetest.check_for_falling(pos)
-                    placed_ok = true
-                else
-                    local msg = "!!! No "..node_name.." in inventory to build with."
-                    minetest.chat_send_player(player:get_player_name(),
-                            minetest.colorize('#F55', msg))
-                end
+local function ok_to_place(player,node_name)
+    local ok_to_place = false
+    if survival_test(player) then
+        if node_name ~= "air" then
+            local inv = player:get_inventory()
+            if inv:contains_item("main", node_name) then
+                inv:remove_item("main", node_name)
+                ok_to_place = true
             else
+                local msg = "!!! No "..node_name.." in inventory to build with."
+                minetest.chat_send_player(player:get_player_name(),
+                        minetest.colorize('#F55', msg))
+            end
+        else
+            ok_to_place = true
+        end
+    else
+        ok_to_place = true
+    end
+    return ok_to_place
+end
+
+
+local function safe_dig(pos,node,player)
+    if not minetest.is_protected(pos, player:get_player_name()) then
+        if node.name ~= m_node then
+            minetest.node_dig(pos,node,player)
+        end
+    end
+end
+
+
+local function replace_node(pos, player, node_name)
+    if not minetest.is_protected(pos, player:get_player_name()) then
+        local placed_ok = false
+        local current_node = minetest.get_node(pos)
+        if current_node.name ~= node_name then
+            if ok_to_place(player,node_name) then
+                safe_dig(pos,current_node,player)
                 minetest.set_node(pos, {name = node_name})
                 minetest.check_for_falling(pos)
                 placed_ok = true
@@ -171,7 +192,7 @@ local function super_build(pos, player, node_name)
         for _, coord in pairs(coords) do
             local old_node = minetest.get_node(coord)
             if old_node.name ~= "air"  and node_name == "air" then
-                minetest.node_dig(coord,old_node,player)
+                safe_dig(coord,old_node,player)
             end
             replace_node(coord, player, node_name)
         end
@@ -184,7 +205,7 @@ end
 local function pickup(pos, player, keepit)
     local node = minetest.get_node(pos)
     if keepit then
-        minetest.node_dig(pos,node,player)
+        safe_dig(pos,node,player)
     else
         replace_node(pos, player, "air")
     end
